@@ -118,3 +118,9 @@ ScrapBuilder/
 ## For Claude Code (agent)
 
 Read `CLAUDE.md` first, every session. Invoke `build-scraper` to build. Invoke `evolve-docs` before signing off — the docs are the brain; update them or the next session starts blind.
+
+---
+
+## License
+
+MIT — built this crap in like a day instead of finishing the semester >.<
