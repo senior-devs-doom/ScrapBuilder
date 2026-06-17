@@ -1,0 +1,21 @@
+# ScrapBuilder — single shared environment (builder + all apps).
+# Interpreter: Python 3.12 (see docs/ENVIRONMENT.md for why, not 3.14).
+# One venv for everything: python -m venv .venv on a 3.12 interpreter, then
+#   .venv/Scripts/python -m pip install -r requirements.txt
+#
+# Core (direct deps — pinned):
+requests==2.34.2
+httpx==0.28.1
+extruct==0.18.0
+jmespath==1.1.0
+beautifulsoup4==4.15.0
+lxml==6.1.1
+soupsieve==2.8.4
+requests-cache==1.3.2
+pandas==3.0.3
+openpyxl==3.1.5
+selectolax==0.4.10
+#
+# Tier-4 render, install on demand (heavy + downloads a browser):
+#   pip install playwright && playwright install chromium
+# playwright==1.49.0

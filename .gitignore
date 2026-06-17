@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+
+# Scout artifacts (raw HTML snapshots) and dev caches — builder-side only.
+apps/**/_scout/
+.cache/
+*.cache
+.requests-cache.sqlite
+apps/**/.cache/
+
+# All real client apps are private — only the two reference apps stay tracked.
+# When building a new app, do NOT add it here; the blanket rule covers it.
+apps/*
+!apps/books.toscrape.com/
+!apps/samplesite.pl.offer/
+
+# JOURNAL contains real client URLs and targets — keep out of version control.
+# Technical patterns extracted from sessions live in CASES.md / TOOLS.md (tracked).
+docs/JOURNAL.md
+
+# Operator contact info for User-Agent strings — private, never commit.
+creds.txt
