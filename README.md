@@ -25,6 +25,7 @@ Paste the URL (filters and all) into Claude Code. Walk away. Come back to a comp
 - **Identifies itself.** Every request carries a `User-Agent` string with a contact address so site operators can reach you.
 - **No auth-walled data.** Only public-facing content the site serves to any visitor.
 - **Your data stays local.** No cloud, no API calls at runtime, no third-party services.
+- You only leak to your AI Agent provider, in my case Daddy Dario, but should work on local LLM and linux with minimal adjustments.
 
 > Only use on sites you're authorized to scrape. Respect terms of use.
 
