@@ -1,6 +1,6 @@
 # ScrapBuilder
 
-You give Claude Code a URL. It builds you a Python app. You double-click `run.bat`. You get a `.csv` + `.xlsx` with every product on that page — full spec tables, variants, images as links.
+You give Claude Code a URL. It builds you a Python app. You double-click `run.bat`. You get a `.csv` + `.xlsx` with every product on that page — full spec table, variants, image links etc. Agent follows a flexible procedure and handles this intern abuse level task.
 
 No programming required at any point.
 
@@ -10,11 +10,11 @@ URL  →  Claude Code builds app  →  double-click run.bat  →  products.csv
 
 ---
 
-## First use case
+## Genesis use case
 
-You're looking at a product category on some supplier's website. You want all 700 items as a spreadsheet — part numbers, names, dimensions, prices, image links — not copy-pasted one by one.
+You want products and their specs from a supplier, but he just folds his arms and redirects you to his website. You want all 700 items as a spreadsheet — part numbers, names, dimensions, prices, image links — without manually painstankingly visiting each subpage, you have many middleages tech suppliers and you want to be able to update their data fast.
 
-Paste the URL (filters and all) into Claude Code. Walk away. Come back to a `.csv`.
+Paste the URL (filters and all) into Claude Code. Walk away. Come back to a complete `.csv` and `.xlsx`.
 
 ---
 
