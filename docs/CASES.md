@@ -4,8 +4,8 @@ A living catalogue. Each session, if you meet a site that doesn't fit, add an ar
 If you refine a playbook, edit it in place. This is the institutional memory that makes
 session N+1 faster than session N.
 
-> Status: growing. Archetypes B (HTML listing) and G (Headless SPA + GQL) confirmed in
-> the wild. Others remain theoretical until a JOURNAL entry validates them.
+> Status: growing. Archetypes B (HTML listing), G (Headless SPA + GQL), H (Drupal JSON:API),
+> and I (Plone CMS custom endpoints) confirmed in the wild. Others remain theoretical.
 
 ---
 
@@ -59,57 +59,67 @@ No record-level HTML parsing needed — just file discovery + a per-format reade
 DevTools shows GQL POST to a `/graphql*` endpoint, often on a **different domain** than
 the site. Products never appear in the HTML source.
 **Playbook:** Tier 3. Replay the GQL POST — no browser needed.
-- **Find the endpoint:** Network tab → filter `graphql` → grab POST URL, `Origin`/`Referer`
-  headers, and the operation name from the request body.
-- **Read the bundled query file FIRST:** before probing, find the `.js` asset that contains
-  the GQL operation (search by operation name). The query document inside gives correct
-  field names, variable types, and nested arg patterns — authoritative, free, no roundtrips.
-  Also attempt introspection: `{"query":"{__schema{types{name fields{name}}}}"}`. If enabled:
-  full schema. If disabled: fall back to the bundle.
+- **Read the bundled query file FIRST:** find the `.js` asset containing the GQL operation
+  (search by operation name). Gives correct field names, variable types, nested args —
+  authoritative, free. Also try introspection; if disabled, fall back to the bundle.
 - **Identify the real data resolver:** GQL responses often have multiple sub-resolvers.
-  The one backed by the search/discovery layer (variants, hits) is usually reliable; the one
-  backed by a separate commerce platform (product detail enrichment) may return 404s per
-  item — treat partial errors on non-critical fields as expected, not fatal.
-- **Schema divergence:** JS bundle field names and the live schema can differ. Let GQL
-  validation errors guide you — "Did you mean X?" is authoritative.
-- **Nested variable pattern:** some field-level args require a variable declared at query
-  level but NOT passed to the top-level resolver — only to the nested field selector.
-  Example: `$locale: Locale!` used as `someField(lang: $locale)` not as a query argument.
+  The search/discovery one (variants, hits) is reliable; the commerce-platform one (detail
+  enrichment) may return 404s per item — treat partial errors on non-critical fields as
+  expected, not fatal.
+- **Nested variable pattern:** some field-level args require a variable at query level
+  but passed only to the nested field selector, not the top-level resolver.
 - **Pagination:** integer `page` variable (1-based) + `quantity`. Stop when
   `len(hits) < quantity`.
 - **Filter extraction from URL:** query-string keys starting with `filter` → strip prefix →
   filter field name. `urllib.parse.parse_qs` decodes encoded chars and `+`→space correctly.
-- **Response list wrapping:** some fields return `[{...}]` not `{...}`. Always check type;
-  take `[0]` when it's a list.
-- **Channel/tenant ID pattern:** channel = `{site-prefix}-{locale}` derived from site
-  config — check the main JS bundle for a `channel()` or `factFinderChannel()` function.
-- **Apollo cache in HTML (free Tier 1 data):** SSR SPAs often inject the Apollo Client
-  cache as a JSON blob in an inline `<script>` tag. Look for `"ROOT_QUERY"` in script
-  text; `json.loads(tag.string)` gives the full cache. The `ROOT_QUERY` keys reveal every
-  GQL operation the page fired and their full results — field names, types, nested data —
-  without needing introspection or bundle analysis.
-- **Two-level GQL detail for technical attributes:** If the listing resolver only returns
-  summary fields (name, slug, image, category), check the Apollo cache of a product detail
-  page for a second resolver (e.g. `getCatalogProductDataById`). That resolver may return
-  `Attributes: [{AttributeKey, AttributeName, Value, Unit}]` with the full spec table.
-  Probe it directly as a GQL query — note that locale params may use `CatalogLocale!`
-  type, not `String!` (let validation errors guide you). Design the scraper as two-level:
-  listing pass → detail pass per ID. Use `--no-detail` flag for fast listing-only VERIFY.
-- **Dynamic attribute columns:** When detail attributes vary by product type, collect all
-  attribute keys across the full dataset before writing the CSV (two-pass: list all IDs,
-  then fetch details, then write). Use `AttributeName` (HTML-stripped) as the column
-  header. Sparse columns (genuinely optional per product type) are expected — verify with
-  `check_coverage.py`.
+- **Apollo cache in HTML (free Tier 1 data):** SSR SPAs inject the Apollo cache as inline
+  JSON (`"ROOT_QUERY"` key). `json.loads(tag.string)` reveals every GQL operation fired and
+  its full results — field names, types, nested data — no introspection roundtrip needed.
+- **Two-level GQL detail for technical attributes:** If listing resolver returns summaries
+  only, check the detail page Apollo cache for a second resolver returning `Attributes:
+  [{AttributeKey, AttributeName, Value, Unit}]`. Locale params may use `CatalogLocale!`
+  not `String!` — let validation errors guide you. Use `--no-detail` for fast VERIFY.
+- **Dynamic attribute columns:** Two-pass: list all IDs → fetch details → collect all
+  `AttributeName` keys (HTML-stripped) → write CSV. Sparse per-type columns expected;
+  `check_coverage.py` verifies.
+
+## H. Drupal JSON:API  *(CONFIRMED — Session 13)*
+
+**Tells:** `/jsonapi/` returns `application/vnd.api+json`; `X-Generator: Drupal` in headers.
+**Playbook:** Tier 1. GET `/jsonapi/` → lists all resource types. Filter by relationship
+UUID: `?filter[field_*_rel_*.id]=<uuid>` — always read one entity's `relationships` keys
+for the exact field name before writing any filter (never guess). Include chain:
+`?include=rel1,rel2.subrel`. Pagination: `page[offset]` + `page[limit]`; stop when
+`"next"` absent from `links`. Spec tables may be HTML fields: check `data-nb-cols` for
+authoritative leaf-column count before building a rowspan/colspan solver; row values may
+be `#//#`-delimited (first cell = variant code). path.alias CONTAINS filter returns 500 —
+match locally. Sparse columns across entity subtypes are expected and correct.
+
+## I. Plone CMS  *(CONFIRMED — Session 14)*
+**Tells:** `++plone++` in asset URLs (e.g. `/++plone++<pkg>/scripts/`). REST API
+(`/@search`, `/@types`) may return 404 — not always exposed.
+**Playbook:** Tier 1. Skip REST probes. Grep `app.min.js` for `.load(` and `.get(` —
+each hit reveals a custom AJAX traverser URL. Listing: `GET <path>/<endpoint>?filter=X`
+→ HTML fragment. Per-record: `GET <record_url>/<endpoint>` → JSON (often `Content-Type:
+text/plain` despite JSON body — use `get()` + `json.loads()`). Repeated GET filter params
+→ use `list[tuple]` with `urlencode`, not `dict`. Response field format: `{identifier,
+type, display_value, value}` — always use `display_value`. Boolean `display_value` values
+need string conversion before writing CSV.
 
 ---
 
 ## Cross-cutting gotchas (add as you hit them)
+- **Always traverse to the deepest entity before modelling.** The listing is a summary.
+  The full schema lives on the detail page — or the sub-detail page, or a catalogue
+  document. Use `probe_detail.py --max-depth 2` to find it. If you model from the listing
+  alone you will miss fields. Upward traversal (going UP the URL hierarchy) is a last
+  resort — tell the user when you do it.
 - **Pagination — scout before assuming:** not all listing pages paginate. Check first. When
   pagination exists, prefer an explicit next-link or total over "until empty"; always cap
   with MAX_PAGES so a bad loop can't run forever.
-- **GQL schema vs JS bundle field names may differ:** The JS bundle is bundled at build time
-  and may reference fields that were renamed in the live schema. Always confirm field names
-  via GQL validation errors (the server's "Did you mean X?" messages are authoritative).
+- **API field names: read before guessing.** For GQL: let validation errors guide you ("Did
+  you mean X?" is authoritative). For REST/JSON:API: read one entity's `attributes` and
+  `relationships` keys — the correct filter path is right there; don't guess field names.
 - **Session summaries can be wrong about saved files:** A summary claiming a file contains
   data X is only as reliable as the last actual write. Always `Read` the file before
   trusting a summary's description of its contents. (Confirmed Session 9.)

@@ -62,7 +62,7 @@ Edits must be precise and small; the brain stays sharp by *replacing*, not *accr
 
 ---
 
-## Model note (validated Session 4)
+## Model note
 Routine EVOLVE on normal builds is safe on a cheaper model — judgment is pre-encoded here.
 Two tendencies to police on cheaper models: (1) **verbosity** — enforce one-screen rule;
 (2) **accrete-vs-edit** — make it edit in place, not append duplicates.

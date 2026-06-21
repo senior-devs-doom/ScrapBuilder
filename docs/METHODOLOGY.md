@@ -34,14 +34,19 @@ Goal: understand the site at the lowest possible cost before writing a line of s
     attributes) absent from the listing. Run `probe_detail.py` to find the detail URL.
   - Append `?format=json` / `?output=json`, scan for `/api/`, `/ajax/`, `admin-ajax.php`.
 - If nothing hidden, locate where data entries live in the HTML (repeating row/card).
-- **Check for detail pages and subsections.** Follow one listing card link to its
-  per-item detail page. Also check if the site has sub-sections or category pages that
-  contain additional records relevant to the entry URL's dataset. Use
-  `python utils/probe_detail.py apps/<site>/_scout/<listing>.html <base_url>` — it
-  extracts candidate detail/sub-page links and snapshots the first one.
-  If detail pages exist with richer data (descriptions, specs, stock, IDs, variants):
-  the listing is a summary — the built app must traverse both levels (two-level crawl).
-  Note this in the MODEL step.
+- **Traverse to the deepest data entity.** The target is: "the most detailed end
+  description of a single record." Run:
+  `python utils/probe_detail.py apps/<site>/_scout/<listing>.html <base_url> --max-depth 2`
+  The tool descends level by level (listing → detail page → sub-detail page if richer),
+  reports content delta at each hop, and stops when no further gain is found. Saves each
+  level as `detail_depth1.html`, `detail_depth2.html` etc.
+  - The deepest page with the most content is the authoritative schema. Map ALL fields
+    on it — this defines the full column set, not the listing.
+  - If catalogue documents (PDF/XLSX/CSV) are linked: treat them as the entity source.
+  - If the entry URL is already the deepest entity: note it and proceed.
+  - **Upward traversal** (going UP to a parent/category URL) is a last resort — only
+    when the entry URL is an isolated entity with no listing context. If you traverse
+    upward: stop and tell the user before continuing. Never silently expand scope.
 - Decide the **cost tier** (see [TOOLS.md](TOOLS.md)). Report it.
 
 > **Report to user.** Site character (tech stack, size estimate), where the data lives,

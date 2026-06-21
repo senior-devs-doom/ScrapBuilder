@@ -18,6 +18,12 @@ advance to the next phase until all boxes in the current phase are ticked.
 
 ☐ **URL received.** If not, ask for exactly one URL and stop.
 
+☐ **Image storage confirmed — ask the user NOW, before SCOUT.**
+  "Images: hyperlinks in CSV, or download locally?"
+  - Hyperlinks → URL string column (default if user doesn't answer).
+  - Local → `images/{unique_record_id}.{ext}`, relative path in CSV.
+  Ask immediately when the URL is received. Do not wait until MODEL.
+
 ☐ **Venv healthy.**
   Run: `.venv\Scripts\python -c "import requests, openpyxl; print('OK')"`
   If it fails: follow the agent-driven setup sequence in [ENVIRONMENT.md](../../../docs/ENVIRONMENT.md)
@@ -45,10 +51,19 @@ advance to the next phase until all boxes in the current phase are ticked.
   - `/wp-json/`, `?format=json`, `/api/`, `admin-ajax.php`
   - XHR/fetch calls visible in DevTools (guess from URL patterns)
 
-☐ **Detail pages and subsections checked.**
-  Run: `python utils/probe_detail.py apps/<site>/_scout/<listing>.html <base_url>`
-  If detail/sub-pages exist with richer data (specs, variants, descriptions absent from
-  the listing): flag as **two-level crawl** and carry that decision into MODEL.
+☐ **Deepest data entity reached and mapped.**
+  Goal: "reach the most detailed end description of a single record" — traverse DOWN
+  the site hierarchy until no richer level exists.
+  Run: `python utils/probe_detail.py apps/<site>/_scout/<listing>.html <base_url> --max-depth 2`
+  - Tool follows links level by level, reports content delta at each, stops when no
+    further gain. Saves `detail_depth1.html`, `detail_depth2.html` etc.
+  - If a deeper level is richer: that page is the authoritative schema — map ALL fields
+    on it before moving to MODEL.
+  - If catalogue documents (PDF/XLSX) are found: treat them as the entity source instead.
+  - If entry URL is already the deepest entity (no deeper links): note it and continue.
+  **Upward traversal** (navigating to a parent/category URL) is a last resort — only
+  when the entry URL is an isolated entity with no listing context. If you traverse
+  upward: STOP and tell the user explicitly before continuing.
 
 ☐ **Archetype matched** to [CASES.md](../../../docs/CASES.md). Cost tier decided.
 
@@ -63,13 +78,6 @@ advance to the next phase until all boxes in the current phase are ticked.
 
 ☐ **Column language confirmed** = site's language unless user specified otherwise.
   Strip HTML tags from any API-sourced field names.
-
-☐ **Image decision made — HARD GATE. Do not write any code yet.**
-  If the record has image URLs: ask the user now:
-  "Hyperlinks in CSV, or download locally?"
-  - Hyperlinks → URL string column.
-  - Local → `images/{unique_record_id}.{ext}`, relative path in CSV.
-  Only proceed after the user answers (or confirms the default of hyperlinks).
 
 ☐ **Traversal determined** — pagination / cursor / id-range / sitemap / single-page.
 
@@ -93,6 +101,11 @@ advance to the next phase until all boxes in the current phase are ticked.
 ☐ **Template shape copied** from `apps/samplesite.pl.offer/` and specialised:
   `scripts/main.py`, `scripts/fetch.py`, `scripts/parse.py`, `scripts/export.py`,
   `run.bat`, `README.txt`.
+
+☐ **run.bat venv path correct.** Apps always sit exactly 2 levels deep (`apps/<name>/`).
+  `run.bat` must use `%~dp0..\..\.venv\Scripts\python.exe` — exactly two `..` segments.
+  Verify the path resolves to the project root before writing. Wrong depth = silent fail
+  at double-click time (venv not found error with no obvious cause).
 
 ☐ **`_load_contact()` helper present** in `main.py` (copied from template). Contact read
   from project-root `creds.txt` at runtime. No real email hardcoded in any source file.

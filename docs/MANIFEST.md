@@ -25,5 +25,6 @@ package, and a fresh `<site>.csv` produced by running it.
 **Out of scope:** Sites with a real API (use the API), auth-walled/paywalled content,
 anything the user isn't authorized to scrape, JS-game-level interactivity.
 
-**Status:** Session 12. Three apps: Tier 2 HTML listing, Tier 3 GQL SPA (×2 Fischer Poland,
-incl. two-level detail with dynamic attribute columns). Current state always in [JOURNAL.md](JOURNAL.md).
+**Status:** Session 14. Five apps: Tier 1 Plone custom AJAX+JSON (×1), Tier 1 Drupal
+JSON:API (×1), Tier 2 HTML listing (×1), Tier 3 GQL SPA (×2 two-level dynamic columns).
+Current state always in [JOURNAL.md](JOURNAL.md).
